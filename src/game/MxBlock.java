@@ -1,4 +1,4 @@
-package deneme;
+package game;
 
 import static org.lwjgl.opengl.GL11.GL_QUADS;
 import static org.lwjgl.opengl.GL11.glBegin;
@@ -9,6 +9,7 @@ import static org.lwjgl.opengl.GL11.glVertex2f;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Random;
 
@@ -24,9 +25,11 @@ public class MxBlock {
 	private int i;
 	private int j;
 	private Texture block;
+	private Texture shine;
+	private Texture wrsh;
 	private int size;
 	
-	public MxBlock(int x, int y, int i, int j, boolean chosen)
+	public MxBlock(int x, int y, int i, int j, boolean chosen) throws FileNotFoundException, IOException
 	{
 		this.x = x;
 		this.y = y;
@@ -35,6 +38,15 @@ public class MxBlock {
 		size = 100;
 		Random randomGenerator = new Random();
 		value = (int) ((randomGenerator.nextFloat() * 10) + 1);
+		
+		
+			shine = TextureLoader.getTexture("PNG", new FileInputStream(new File("res/mxshine.png")));
+		
+		
+		
+			wrsh = TextureLoader.getTexture("PNG", new FileInputStream(new File("res/mxwrsh.png")));
+		
+		
 		if(chosen)
 		{
 			try {
@@ -50,6 +62,7 @@ public class MxBlock {
 				e.printStackTrace();
 			}
 		}
+		
 		
 	}
 	
@@ -72,6 +85,36 @@ public class MxBlock {
 	public void draw()
 	{
 		block.bind();
+		glBegin(GL_QUADS);
+			glTexCoord2f(0, 0);
+			glVertex2f(x, y); //Upper left corner
+			glTexCoord2f(1, 0);
+			glVertex2f(x + size, y); //Upper right corner
+			glTexCoord2f(1, 1);
+			glVertex2f(x + size, y + size); //Bottom right corner
+			glTexCoord2f(0, 1);
+			glVertex2f(x, y + size); //Bottom left corner
+		glEnd();
+	}
+	
+	public void sh()
+	{
+		shine.bind();
+		glBegin(GL_QUADS);
+			glTexCoord2f(0, 0);
+			glVertex2f(x, y); //Upper left corner
+			glTexCoord2f(1, 0);
+			glVertex2f(x + size, y); //Upper right corner
+			glTexCoord2f(1, 1);
+			glVertex2f(x + size, y + size); //Bottom right corner
+			glTexCoord2f(0, 1);
+			glVertex2f(x, y + size); //Bottom left corner
+		glEnd();
+	}
+	
+	public void wrsh()
+	{
+		wrsh.bind();
 		glBegin(GL_QUADS);
 			glTexCoord2f(0, 0);
 			glVertex2f(x, y); //Upper left corner

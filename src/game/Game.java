@@ -1,4 +1,4 @@
-package deneme;
+package game;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -41,6 +41,9 @@ public class Game {
 	private int selected = 0;
 	private int i = 3;
 	private int j = 3;
+	private long start;
+	private boolean musicOn = true;// for music on off button
+	private boolean justClicked = false;// to realize if user just clicked on button or not
 	private int[][] remaining = new int[5][5];
 	private Texture winner1;
 	private Texture winner2;
@@ -48,6 +51,10 @@ public class Game {
 	private Texture turnTex1;
 	private Texture turnTex2;
 	private Texture logo;
+	private Texture on1;
+	private Texture on2;
+	private Texture off1;
+	private Texture off2;
 	
 	DisplayMode displayMode;
 	private GButton exit;
@@ -55,11 +62,13 @@ public class Game {
 	private GButton play;
 	private GButton again;
 	private GButton back;
+	private GButton ins1;
+	private GButton ins2;
 	
 	
 	private static enum State
 	{
-		INTRO, MAIN_MENU, ABOUT, GAME;
+		INTRO, MAIN_MENU, INSTR, GAME;
 	}
 	
 	private State state = State.MAIN_MENU;
@@ -99,29 +108,45 @@ public class Game {
 			glEnable(GL_BLEND);// FOR THE TRANSPARENCY!!!!!!!!!!
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);// FOR THE TRANSPARENCY!!!!!!!!!!
 			again = new GButton(570,645,"ag11","ag12","ag13","ag21","ag22","ag23",64);
-			exit = new GButton(950,645,"ex11","ex12","ex13","ex21","ex22","ex23",64);
+			exit = new GButton(950,700,"ex11","ex12","ex13","ex21","ex22","ex23",64);
 			play = new GButton(550,300,"p11","p12","p13","p21","p22","p23",64);
 			back = new GButton(150,645,"b11","b12","b13","b21","b22","b23",64);
+			ins1 = new GButton(450,400,"ins11","ins12","ins13","ins21","ins22","ins23",64);
+			ins2 = new GButton(642,400,"ins14","ins15","ins16","ins24","ins25","ins26",64);
 		setUpFonts();
 		preNxNBoard();
+		//on1 = TextureLoader.getTexture("PNG", new FileInputStream(new File("res/on1.png")));
+		//on2 = TextureLoader.getTexture("PNG", new FileInputStream(new File("res/on2.png")));
+		//off1 = TextureLoader.getTexture("PNG", new FileInputStream(new File("res/off1.png")));
+		//off2 = TextureLoader.getTexture("PNG", new FileInputStream(new File("res/off2.png")));
 		winner1 = TextureLoader.getTexture("PNG", new FileInputStream(new File("res/p1win.png")));
 		winner2 = TextureLoader.getTexture("PNG", new FileInputStream(new File("res/p2win.png")));
 		nowinner = TextureLoader.getTexture("PNG", new FileInputStream(new File("res/tie.png")));
 		turnTex1 = TextureLoader.getTexture("PNG", new FileInputStream(new File("res/turn1.png")));
 		turnTex2 = TextureLoader.getTexture("PNG", new FileInputStream(new File("res/turn2.png")));
 		logo = TextureLoader.getTexture("PNG", new FileInputStream(new File("res/maxlogo.png")));
+		start = (Sys.getTime())/ Sys.getTimerResolution();
 		playSound("ba.wav");
 		while(!Display.isCloseRequested())
 		{
 			//render
 			glClear(GL_COLOR_BUFFER_BIT);
 			
+			if((((Sys.getTime())/ Sys.getTimerResolution() - start >= 72)&& musicOn)
+					|| justClicked)//72 arkaplan müziðinin saniye cinsinden uzunluðu
+			{
+				start = (Sys.getTime())/ Sys.getTimerResolution();
+				playSound("ba.wav");
+				justClicked = false;
+			}
 			
 			//System.out.println("x: " + Mouse.getX() + ", y: " + -Mouse.getY());
 			if(state == State.MAIN_MENU)
 				renderMenu();
 			else if(state == State.GAME)
 				runGame();
+			else if(state == State.INSTR)
+				renderInstr();
 			
 			
 			
@@ -133,7 +158,7 @@ public class Game {
 		Display.destroy();
 	}
 	
-	public void preNxNBoard()//N e N boardý hazýrlayacak (5x5 lik þuan)
+	public void preNxNBoard() throws FileNotFoundException, IOException//N e N boardý hazýrlayacak (5x5 lik þuan)
 	{
 		int x = 400;
 		int y = 0;
@@ -237,7 +262,20 @@ public class Game {
 		
 		for(MxBlock m: blocks)
 		{
-			m.draw();
+			if((m.inBounds(Mouse.getX(), Display.getHeight() - Mouse.getY()) && (i == m.getI() || j == m.getJ()))
+					||(m.inBounds(Mouse.getX(), Display.getHeight() - Mouse.getY()) && anyPoss()) )
+			{
+				m.sh();
+			}
+			else if((m.inBounds(Mouse.getX(), Display.getHeight() - Mouse.getY()) && !(i == m.getI() || j == m.getJ()))
+					||(m.inBounds(Mouse.getX(), Display.getHeight() - Mouse.getY()) && !anyPoss()) )
+			{
+					m.wrsh();
+			}
+			else
+				m.draw();
+			
+			
 			if(Mouse.isButtonDown(0) && m.inBounds(Mouse.getX(), Display.getHeight() - Mouse.getY()) && (i == m.getI() || j == m.getJ()))
 			{
 				playSound("click.wav");
@@ -278,7 +316,7 @@ public class Game {
 			}
 			else if(Mouse.isButtonDown(0) && m.inBounds(Mouse.getX(), 480 - Mouse.getY()))
 			{
-				System.out.println("Incorrect block");
+				
 			}
 			
 		}
@@ -341,13 +379,65 @@ public class Game {
 	}
 	
 	
+	
+	
+	public void renderInstr()
+	{
+		font.drawString(0, 0, "\n\nHow To Play:\n       Two players alternate turns.\n       "
+	+ "At each turn,  a player must select a grid element\n" + 
+				"       in the current row or column.\n" + 
+	"       The block with star is designated as the initial current position.\n" + 
+	"       The value of the selected position is added to the player’s score,\n" + 
+	"       and that position becomes the current\n" + 
+	"       position and cannot be selected again.\n"  +  
+	"       Players alternate until all grid elements\n" +  
+	"       in the current row and column are already selected,\n" + 
+	"       at which point the game ends and\n" + "       the player with the higher score wins.");
+		if(back.inBounds(Mouse.getX(), Display.getHeight() - Mouse.getY()))
+		{
+			back.shine();
+		}
+		else
+		{
+			back.draw();
+		}
+		
+		if((back.inBounds(Mouse.getX(), Display.getHeight() - Mouse.getY())) 
+				&& Mouse.isButtonDown(0))
+		{
+			playSound("click.wav");
+			state = State.MAIN_MENU;
+		}
+	}
+	
+	
 	public void renderMenu()
 	{
 		play.setX(550);
 		play.setY(300);
 		exit.setX(550);
-		exit.setY(400);
+		exit.setY(500);
 		drawTexture(logo,512,0, 256);
+		
+		if(ins1.inBounds(Mouse.getX(), Display.getHeight() - Mouse.getY())
+				||ins2.inBounds(Mouse.getX(), Display.getHeight() - Mouse.getY()))
+		{
+			ins1.shine();
+			ins2.shine();
+		}
+		else
+		{
+			ins1.draw();
+			ins2.draw();
+		}
+		
+		if(((ins1.inBounds(Mouse.getX(), Display.getHeight() - Mouse.getY())
+				|| ins2.inBounds(Mouse.getX(), Display.getHeight() - Mouse.getY()))) 
+				&& Mouse.isButtonDown(0))
+		{
+			playSound("click.wav");
+			state = State.INSTR;
+		}
 		if(play.inBounds(Mouse.getX(), Display.getHeight() - Mouse.getY()))
 		{
 			play.shine();
