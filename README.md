@@ -1,7 +1,7 @@
 # Noxob-Maxit
 Maxit game implementation using LWJGL
 
-Copyright 2015 Ismail Samir USTA
+Copyright &copy; 2015 Ismail Samir USTA
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
