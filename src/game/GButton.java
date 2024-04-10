@@ -135,11 +135,8 @@ public class GButton {
 	
 	public boolean inBounds(int mousex, int mousey)
 	{
-		if(mousex > x && mousex < x+ (3*height) && mousey > y && mousey < y + height)
-		return true;
-		
-		return false;
-	}
+        return mousex > x && mousex < x + (3 * height) && mousey > y && mousey < y + height;
+    }
 	
 	
 	
